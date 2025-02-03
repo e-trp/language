@@ -34,6 +34,17 @@ pub struct Word {
     pub part_of_speech: Option<String>,
 }
 
+#[derive(Debug, Queryable, Selectable, Insertable)]
+#[diesel(table_name = crate::schema::verb_forms)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct VerbForms {
+    pub id: Option<i32>,
+    pub word_id: i32,
+    pub base_form: String,
+    pub past_simple: String,
+    pub past_participle: String,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct CommonError;
 
@@ -63,21 +74,23 @@ impl FromStr for Word {
     }
 }
 
-pub fn load_words(filename: &str) {
+pub fn load_irregular_words(filename: &str) {
     let mut connection = establish_connection();
     if let Ok(lines) = read_lines(filename) {
         for line in lines.filter_map(Result::ok) {
             let forms: Vec<&str> = line.split_whitespace().collect();
-            if let Ok(new_word) = Word::from_str(forms[0]) {
-                let _ = insert_into(words)
-                    .values(&new_word)
-                    .on_conflict(source)
-                    .do_nothing()
-                    .returning(id)
-                    .execute(&mut connection);
-                println!("{:?}", new_word);
+            if forms.len() >= 3 {
+                if let Ok(new_word) = Word::from_str(forms[0]) {
+                    let word_id = insert_into(words)
+                        .values(&new_word)
+                        .on_conflict(source)
+                        .do_nothing()
+                        .get_result::<(Option<i32>, String, Option<String>, Option<String>, Option<String>)>(&mut connection)
+                        .unwrap();
+                    println!("{:?}", word_id);
+                }
+                sleep(Duration::from_millis(200));
             }
-            sleep(Duration::from_secs(1));
         }
     }
 }
