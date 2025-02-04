@@ -108,15 +108,14 @@ impl  Word {
         }
     }
 
-    pub fn get_irregular_verb_from_db(target_word: &str) {
+    pub fn get_irregular_verb_from_db(target_word: &str) -> Result<Vec<(Word, VerbForms)>, diesel::result::Error>{
         let mut conn  = establish_connection();
-        let word_data = words::table
+        let result = words::table
             .inner_join(verb_forms)
             .filter(words::source.eq(target_word))
             .select((Word::as_select(), VerbForms::as_select()))
             .load::<(Word, VerbForms)>(&mut conn);
-
-        println!("{:?}", word_data);
+        result
     }
 
 }
