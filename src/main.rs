@@ -1,6 +1,6 @@
-use language::word::{Word, load_irregular_words};
+use language::word::Word;
 
 
 fn main() {
-    load_irregular_words("irregular_verbs.txt");
+    Word::load_irregular_words("irregular_verbs.txt");
 }

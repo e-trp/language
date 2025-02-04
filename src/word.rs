@@ -1,9 +1,10 @@
 use std::{fs::File, io::{self, BufRead}, path::Path, thread::sleep, time::Duration, env, str::FromStr};
-use diesel::{prelude::*, dsl::insert_into, sqlite::SqliteConnection};
+use diesel::{dsl::insert_into, prelude::*, sqlite::SqliteConnection};
 use dotenv::dotenv;
 use reqwest::blocking;
 use scraper::{Html, Selector};
-use crate::schema::{verb_forms::dsl::*, words::dsl::*};
+use crate::schema::{verb_forms::dsl::*, words::{dsl::*, id}};
+use crate::schema::words;
 
 const DICTIONARY_URL: &str = "https://dictionary.cambridge.org/dictionary/english/";
 const DATA_PATH: &str = "data";
@@ -73,32 +74,49 @@ impl FromStr for Word {
         })
     }
 }
+impl  Word {
 
-pub fn load_irregular_words(filename: &str) {
-    let mut connection = establish_connection();
-    if let Ok(lines) = read_lines(filename) {
-        for line in lines.filter_map(Result::ok) {
-            let forms: Vec<&str> = line.split_whitespace().collect();
-            if forms.len() >= 3 {
-                if let Ok(new_word) = Word::from_str(forms[0]) {
-                    let result_tuple = insert_into(words)
-                        .values(&new_word)
-                        .on_conflict(source)
-                        .do_nothing()
-                        .get_result::<(Option<i32>, String, Option<String>, Option<String>, Option<String>)>(&mut connection)
-                        .unwrap();
-                    let _ = insert_into(verb_forms).values(
-                        VerbForms{
-                            id: None,
-                            word_id:result_tuple.0.unwrap(), 
-                            base_form: forms[0].to_string(), 
-                            past_simple:forms[1].to_string(), 
-                            past_participle: forms[2].to_string()
-                        }
-                    ).execute(&mut connection);
+    pub fn load_irregular_words(filename: &str) {
+        let mut conn = establish_connection();
+        if let Ok(lines) = read_lines(filename) {
+            for line in lines.filter_map(Result::ok) {
+                let forms: Vec<&str> = line.split_whitespace().collect();
+                if forms.len() >= 3 {
+                    if let Ok(new_word) = Word::from_str(forms[0]) {
+                        let inserted_word_id= insert_into(words)
+                            .values(&new_word)
+                            .on_conflict(source)
+                            .do_nothing()
+                            .returning(id)
+                            .get_result::<Option<i32>>(&mut conn)
+                            .unwrap();
+
+                        let _ = insert_into(verb_forms).values(
+                            VerbForms{
+                                id: None,
+                                word_id:inserted_word_id.unwrap(), 
+                                base_form: forms[0].to_string(), 
+                                past_simple:forms[1].to_string(), 
+                                past_participle: forms[2].to_string()
+                            }
+                        ).execute(&mut conn);
+                        println!("insert: {new_word:?}");
+                    }
+                    sleep(Duration::from_secs(3));
                 }
-                sleep(Duration::from_secs(3));
             }
         }
     }
+
+    pub fn get_irregular_verb_from_db(target_word: &str) {
+        let mut conn  = establish_connection();
+        let word_data = words::table
+            .inner_join(verb_forms)
+            .filter(words::source.eq(target_word))
+            .select((Word::as_select(), VerbForms::as_select()))
+            .load::<(Word, VerbForms)>(&mut conn);
+
+        println!("{:?}", word_data);
+    }
+
 }
