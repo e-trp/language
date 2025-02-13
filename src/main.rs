@@ -1,4 +1,4 @@
-use iced::{widget::{button, column, row, text, text_input, Column},Size};
+use iced::{widget::{button, column, row, text, text_input, Column}, Size, Theme};
 use language::word::Word;
 use log::debug;
 use dotenv::dotenv;
@@ -27,9 +27,9 @@ impl AppState {
                 text_input("Поле ввода...", &self.content)
                 .on_input(Message::ContentChanged), 
                 button("Искать").on_press(Message::SearchButtonPressed),
-            ],
+            ].spacing(10),
             text(&self.result_string)
-        ]
+        ].spacing(10).padding(10)
     }
     
     fn update(&mut self, message: Message) {
@@ -61,8 +61,9 @@ fn main() {
     dotenv().ok();
     env_logger::init();
     debug!("app init");
-    let _ = iced::application("test", AppState::update, AppState::view)
+    let _ = iced::application("App", AppState::update, AppState::view)
         .window_size(Size::new(300.0, 400.0))
+        .theme(|_as |Theme::Dark)
         .run();
     debug!("app close");
 }
