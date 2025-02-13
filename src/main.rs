@@ -1,8 +1,8 @@
-use diesel::sql_types::Text;
-use iced::{
-    futures::stream::ReuniteError, widget::{button, column, row, text, text_input, Column, Row}, Element, Size, Theme
-};
-use language::word::{VerbForms, Word};
+use iced::{widget::{button, column, row, text, text_input, Column},Size};
+use language::word::Word;
+use log::debug;
+use dotenv::dotenv;
+
 
 
 #[derive(Default)]
@@ -24,13 +24,11 @@ impl AppState {
         column![
             text("Введите слово для поиска: "),
             row![
-
                 text_input("Поле ввода...", &self.content)
                 .on_input(Message::ContentChanged), 
-
                 button("Искать").on_press(Message::SearchButtonPressed),
             ],
-            text(&self.result_string),
+            text(&self.result_string)
         ]
     }
     
@@ -43,7 +41,7 @@ impl AppState {
                 let mut result_string = String::new();
                 if let Ok(search_result)= Word::get_irregular_verb_from_db(&self.content) {
                     for (_word, irregular_verb) in search_result {
-                        println!("{:?}", &irregular_verb);
+                        debug!("found irregular verb run {}", &irregular_verb.base_form);
                         let table_string = format!(
                             "{}| {}| {}",
                             irregular_verb.base_form,
@@ -60,8 +58,12 @@ impl AppState {
 }
 
 fn main() {
+    dotenv().ok();
+    env_logger::init();
+    debug!("app init");
     let _ = iced::application("test", AppState::update, AppState::view)
         .window_size(Size::new(300.0, 400.0))
         .run();
+    debug!("app close");
 }
 
