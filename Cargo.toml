@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libsqlite3-sys = {version = "0.28.0", features = ["bundled"]}
 diesel = { version = "2.2.6", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 dotenv = "0.15.0"
 iced = {version ="0.13.1", features=["multi-window", "debug"]}
