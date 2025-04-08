@@ -40,9 +40,9 @@ impl AppState {
             }
             Message::SearchButtonPressed => {
                 let mut result_string = String::new();
-                if let Ok(search_result) = Word::get_irregular_verb_from_db(&self.content) {
+                if let Ok(search_result) = Word::search_irregular_verb_from_db(&self.content) {
                     for (_word, irregular_verb) in search_result {
-                        debug!("found irregular verb run {}", &irregular_verb.base_form);
+                        debug!("found irregular verb: {}", &irregular_verb.base_form);
                         let table_string = format!(
                             "{}| {}| {}",
                             irregular_verb.base_form,

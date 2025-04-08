@@ -12,3 +12,4 @@ reqwest = {version = "0.12.12", features=["blocking"]}
 scraper = "0.22.0"
 log = "0.4"
 env_logger = "0.11.6"
+rand = "0.9.0"
