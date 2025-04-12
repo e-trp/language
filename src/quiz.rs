@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use crate::word::Word;
 use rand::prelude::*;
+use log::debug;
 
 
 #[derive(Debug, Queryable, Selectable, Insertable)]
@@ -43,7 +44,7 @@ impl  Quiz {
                     let mut shuffle_indexes = (0..words.len()).collect::<Vec<usize>>();
                     shuffle_indexes.shuffle(&mut rand::rng());
                     for i in shuffle_indexes {
-                        println!("{:?}", words[i])
+                        debug!("{:?}", words[i])
                     }
                 }
 
