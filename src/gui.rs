@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use iced::{
     widget::{button, column, row, text, text_input, Column},
     Size, Theme, Length, alignment, Border, Element,
@@ -13,18 +15,52 @@ use iced_aw::{menu_bar, menu_items};
 pub const DEFAULT_THEME: Theme = Theme::Dark;
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(300.0, 400.0);
 
-#[derive(Default)]
+
+#[derive(Debug, Clone)]
+pub struct Result {
+    data: String, 
+    error_count: u32,
+}
+
+
+#[derive(Debug, Clone)]
+pub enum MenuItem  {
+    Finder(Option<String>),
+    IrrQuiz(Option<Result>),
+    TextQuiz(Option<Result>),
+    Dictionary(Option<String>)
+}
+
+
+#[derive(Debug, Clone)]
 pub struct AppState {
     pub content: String,
-    pub result_string: String,
+    pub layout: MenuItem,
+    pub result_string: String
 }
+
+
+impl Default for  AppState {
+    fn default() -> Self {
+        Self {
+            content: "".to_string(), 
+            layout: MenuItem::Dictionary(None),
+            result_string: "".to_string(), 
+
+        } 
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub enum Message {
     Debug(String),
     ContentChanged(String),
     SearchButtonPressed,
+    DictionaryButtonPressed,
+    MenuButton(MenuItem)
 }
+
 
 impl AppState {
     pub fn view(&self) -> Column<Message> {
@@ -40,27 +76,52 @@ impl AppState {
 
         let menu_dictionary = menu_bar!(
             (debug_button_s("Cловарь"), menu_tpl_1(menu_items!(
-                (debug_button("Формы глаголов"))
+                (labeled_button("Формы глаголов", Message::MenuButton(MenuItem::IrrQuiz(None))))
                 (debug_button("Найти слово"))
             )).width(240.0))
         );
 
-        column![
+        let window: Column<'_, Message> = column![
             row![
             menu_quiz,
             menu_dictionary,
             ],
-            text("Введите слово для поиска: "),
-            row![
-                text_input("Поле ввода...", &self.content)
-                    .on_input(Message::ContentChanged),
-                button("Искать").on_press(Message::SearchButtonPressed),
-            ]
-            .spacing(10),
-            text(&self.result_string)
         ]
         .spacing(10)
-        .padding(10)
+        .padding(10);
+
+
+        match &self.layout {
+            MenuItem::Finder(_) => {
+                let find_view = window.extend( 
+                    [
+                        text("Введите неправильный глагол для поиска: ").into(),
+                        row![
+                            text_input("Поле ввода...", &self.content)
+                            .on_input(Message::ContentChanged),
+                        button("Искать").on_press(Message::SearchButtonPressed),
+                        ].spacing(10).into(),
+                        text(&self.result_string).into()
+                    ]
+                );
+                return find_view;
+            },
+            MenuItem::IrrQuiz(_) => {return window},
+            MenuItem::TextQuiz(_) => {return window},
+            MenuItem::Dictionary(_) => {
+                let dictionary_view = window.extend(
+                    [text("Введите слово для поиска: ").into(),
+                    row![
+                        text_input("Поле ввода...", &self.content)
+                        .on_input(Message::ContentChanged),
+                    button("Искать").on_press(Message::DictionaryButtonPressed),
+                    ].spacing(10).into(),
+                    text(&self.result_string).into()
+                ]);
+                return  dictionary_view;
+            }
+        }
+
     }
 
     pub fn update(&mut self, message: Message) {
@@ -83,6 +144,13 @@ impl AppState {
                     }
                 }
                 self.result_string = result_string;
+            }
+            Message::DictionaryButtonPressed => {
+                if let Ok(word) = Word::from_str(&self.content) {
+                    self.result_string = word.description.unwrap();
+                };
+            },
+            Message::MenuButton(state) => {
             }
             Message::Debug(var) => { debug!("{}", var);}
         }
