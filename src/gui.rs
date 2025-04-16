@@ -13,7 +13,7 @@ use iced_aw::style::{menu_bar::primary, Status};
 use iced_aw::{menu_bar, menu_items};
 
 pub const DEFAULT_THEME: Theme = Theme::Dark;
-pub const DEFAULT_WINDOW_SIZE: Size = Size::new(300.0, 400.0);
+pub const DEFAULT_WINDOW_SIZE: Size = Size::new(400.0, 400.0);
 
 
 #[derive(Debug, Clone)]
