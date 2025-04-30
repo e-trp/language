@@ -6,7 +6,7 @@ use iced::{
     border::Radius
 };
 use log::debug;
-use crate::word::Word;
+use crate::word::{VerbForms, Word};
 
 use iced_aw::menu::{self, Item, Menu};
 use iced_aw::style::{menu_bar::primary, Status};
@@ -36,7 +36,9 @@ pub enum MenuItem  {
 pub struct AppState {
     pub content: String,
     pub menu: MenuItem,
-    pub search_string: String
+    pub search_string: String,
+    pub past_simple_text_input: String,
+    pub past_participle_text_input: String
 }
 
 
@@ -46,10 +48,14 @@ impl Default for  AppState {
             content: "".to_string(), 
             menu: MenuItem::Dictionary(None),
             search_string: "".to_string(), 
+            past_participle_text_input: "".to_string(), 
+            past_simple_text_input: "".to_string(), 
 
         } 
     }
 }
+
+
 
 
 #[derive(Debug, Clone)]
@@ -58,7 +64,10 @@ pub enum Message {
     ContentChanged(String),
     SearchButtonPressed,
     DictionaryButtonPressed,
-    MenuButton(MenuItem)
+    MenuButton(MenuItem),
+    PastSimple(String),
+    PastParticiple(String),
+    CheckIrregularVerb
 }
 
 
@@ -69,13 +78,13 @@ impl AppState {
         
         let menu_quiz = menu_bar!(
             (debug_button_s("Тренировки"), menu_tpl_1(menu_items!(
-                (debug_button("Текст"))
-                (debug_button("Неправильные глаголы"))
+                (labeled_button("Текст", Message::MenuButton(MenuItem::TextQuiz(None))))
+                (labeled_button("Неправильные глаголы", Message::MenuButton(MenuItem::IrrQuiz(None))))
             )).width(240.0))
         );
 
         let menu_dictionary = menu_bar!(
-            (debug_button_s("Cловарь"), menu_tpl_1(menu_items!(
+            (debug_button_s("Словарь"), menu_tpl_1(menu_items!(
                 (labeled_button("Формы глаголов", Message::MenuButton(MenuItem::Finder(None))))
                 (labeled_button("Найти слово", Message::MenuButton(MenuItem::Dictionary(None))))
             )).width(240.0))
@@ -106,8 +115,19 @@ impl AppState {
                 );
                 return find_view;
             },
-            MenuItem::IrrQuiz(_) => {return window},
             MenuItem::TextQuiz(_) => {return window},
+            MenuItem::IrrQuiz(_) => {
+                let irregular_quiz_view = window.extend([
+                    text("Укажите v2-v3 формы неправильного глагола: ").into(),
+                    row![
+                        text_input("past simple", &self.past_simple_text_input).on_input(Message::PastSimple),
+                        text_input("past participle", &self.past_participle_text_input).on_input(Message::PastParticiple),
+                    ].spacing(10).into(),
+                    labeled_button("Проверить", Message::CheckIrregularVerb).into()
+                ]);
+                return irregular_quiz_view
+            
+            },
             MenuItem::Dictionary(_) => {
                 let dictionary_view = window.extend(
                     [text("Введите слово для поиска: ").into(),
@@ -129,6 +149,12 @@ impl AppState {
             Message::ContentChanged(content) => {
                 self.content = content;
             }
+            Message::PastSimple(value) => {
+                self.past_simple_text_input = value;
+            },
+            Message::PastParticiple(value) => {
+                self.past_participle_text_input = value;
+            },
             Message::SearchButtonPressed => {
                 let mut search_string = String::new();
                 if let Ok(search_result) = Word::search_irregular_verb_from_db(&self.content) {
@@ -159,11 +185,20 @@ impl AppState {
                     MenuItem::Dictionary(_) => {
                         self.menu = MenuItem::Dictionary(None);
                     }, 
+                    MenuItem::IrrQuiz(_) => {
+                        self.menu = MenuItem::IrrQuiz(None);
+                    }
                     _ => {}
                 }
 
-            }
-            Message::Debug(var) => { debug!("{}", var);}
+            },
+            Message::CheckIrregularVerb => {
+                debug!("verb check");
+            },
+
+            Message::Debug(var) => { debug!("{}", var);},
+
+            _ => {}
         }
     }
 }
