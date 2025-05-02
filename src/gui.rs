@@ -38,7 +38,8 @@ pub struct AppState {
     pub menu: MenuItem,
     pub search_string: String,
     pub past_simple_text_input: String,
-    pub past_participle_text_input: String
+    pub past_participle_text_input: String,
+    pub words: Option<Vec<VerbForms>>
 }
 
 
@@ -50,6 +51,7 @@ impl Default for  AppState {
             search_string: "".to_string(), 
             past_participle_text_input: "".to_string(), 
             past_simple_text_input: "".to_string(), 
+            words: None
 
         } 
     }
@@ -174,7 +176,6 @@ impl AppState {
             Message::DictionaryButtonPressed => {
                 if let Ok(word) = Word::from_str(&self.content) {
                     self.search_string = word.description.unwrap();
-                    self.menu = MenuItem::Finder(None);
                 };
             },
             Message::MenuButton(menu_item) => {
@@ -186,6 +187,7 @@ impl AppState {
                         self.menu = MenuItem::Dictionary(None);
                     }, 
                     MenuItem::IrrQuiz(_) => {
+                        self.words = Some(Word::fetch_irregular_verbs().unwrap());
                         self.menu = MenuItem::IrrQuiz(None);
                     }
                     _ => {}

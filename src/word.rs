@@ -33,7 +33,7 @@ pub struct Word {
     pub part_of_speech: Option<String>,
 }
 
-#[derive(Debug, Queryable, Selectable, Insertable)]
+#[derive(Debug, Queryable, Selectable, Insertable, Clone)]
 #[diesel(table_name = crate::schema::verb_forms)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct VerbForms {
