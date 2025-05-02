@@ -111,9 +111,9 @@ impl AppState {
                         text(&self.search_string).into()
                     ]
                 );
-                return find_view;
+                find_view
             },
-            MenuItem::TextQuiz(_) => {return window},
+            MenuItem::TextQuiz(_) => {window},
             MenuItem::IrrQuiz(_) => {
                 let irregular_quiz_view = window.extend([
                     text("Укажите v2-v3 формы неправильного глагола: ").into(),
@@ -123,7 +123,7 @@ impl AppState {
                     ].spacing(10).into(),
                     labeled_button("Проверить", Message::CheckIrregularVerb).into()
                 ]);
-                return irregular_quiz_view
+                irregular_quiz_view
             
             },
             MenuItem::Dictionary(_) => {
@@ -136,7 +136,7 @@ impl AppState {
                     ].spacing(10).into(),
                     text(&self.search_string).into()
                 ]);
-                return  dictionary_view;
+                dictionary_view
             }
         }
 

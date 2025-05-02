@@ -108,20 +108,20 @@ impl  Word {
 
     pub fn search_irregular_verb_from_db(target_word: &str) -> Result<Vec<(Word, VerbForms)>, diesel::result::Error>{
         let mut conn  = establish_connection();
-        let result = words::table
+        
+        words::table
             .inner_join(verb_forms)
             .filter(words::source.eq(target_word))
             .select((Word::as_select(), VerbForms::as_select()))
-            .load::<(Word, VerbForms)>(&mut conn);
-        result
+            .load::<(Word, VerbForms)>(&mut conn)
     }
 
     pub fn fetch_irregular_verbs() -> Result<Vec<VerbForms>, diesel::result::Error> {
         let mut conn  = establish_connection();
-        let result = verb_forms
+        
+        verb_forms
             .select(VerbForms::as_select())
-            .load(&mut conn);
-        result
+            .load(&mut conn)
     }
 
 }
