@@ -13,6 +13,30 @@ use iced_aw::{menu_bar, menu_items};
 pub const DEFAULT_THEME: Theme = Theme::Dark;
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(400.0, 400.0);
 
+
+fn base_button<'a>(
+    content: impl Into<Element<'a, Message>>,
+    msg: Message,
+) -> button::Button<'a, Message> {
+    button(content)
+        .padding([4, 8])
+        .style(iced::widget::button::primary)
+        .on_press(msg)
+}
+
+
+fn labeled_button(
+    label: &str,
+    msg: Message,
+) -> button::Button<Message, iced::Theme, iced::Renderer> {
+    base_button(text(label).align_y(alignment::Vertical::Center), msg).width(Length::Fill)
+}
+
+
+fn debug_button_s(label: &str) -> button::Button<Message, iced::Theme, iced::Renderer> {
+    labeled_button(label, Message::Debug(label.into())).width(Length::Shrink)
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Result {
@@ -200,24 +224,3 @@ impl AppState {
     }
 }
 
-fn base_button<'a>(
-    content: impl Into<Element<'a, Message>>,
-    msg: Message,
-) -> button::Button<'a, Message> {
-    button(content)
-        .padding([4, 8])
-        .style(iced::widget::button::primary)
-        .on_press(msg)
-}
-
-fn labeled_button(
-    label: &str,
-    msg: Message,
-) -> button::Button<Message, iced::Theme, iced::Renderer> {
-    base_button(text(label).align_y(alignment::Vertical::Center), msg).width(Length::Fill)
-}
-
-
-fn debug_button_s(label: &str) -> button::Button<Message, iced::Theme, iced::Renderer> {
-    labeled_button(label, Message::Debug(label.into())).width(Length::Shrink)
-}
