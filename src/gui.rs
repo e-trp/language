@@ -2,20 +2,18 @@ use std::str::FromStr;
 
 use iced::{
     widget::{button, column, row, text, text_input, Column},
-    Size, Theme, Length, alignment, Border, Element,
-    border::Radius
+    Size, Theme, Length, alignment, Element
 };
 use log::debug;
 use crate::word::{VerbForms, Word};
 
-use iced_aw::menu::{self, Item, Menu};
-use iced_aw::style::{menu_bar::primary, Status};
+use iced_aw::menu::{Item, Menu};
 use iced_aw::{menu_bar, menu_items};
 
 pub const DEFAULT_THEME: Theme = Theme::Dark;
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(400.0, 400.0);
 
-
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Result {
     data: String, 
@@ -200,7 +198,6 @@ impl AppState {
 
             Message::Debug(var) => { debug!("{}", var);},
 
-            _ => {}
         }
     }
 }
@@ -222,11 +219,7 @@ fn labeled_button(
     base_button(text(label).align_y(alignment::Vertical::Center), msg).width(Length::Fill)
 }
 
-fn debug_button(label: &str) -> button::Button<Message, iced::Theme, iced::Renderer> {
-    labeled_button(label, Message::Debug(label.into())).width(Length::Fill)
-}
 
 fn debug_button_s(label: &str) -> button::Button<Message, iced::Theme, iced::Renderer> {
     labeled_button(label, Message::Debug(label.into())).width(Length::Shrink)
 }
-
