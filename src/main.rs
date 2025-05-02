@@ -1,5 +1,4 @@
 use language::gui::{AppState, DEFAULT_THEME, DEFAULT_WINDOW_SIZE};
-use language::quiz::Quiz;
 use log::debug;
 use dotenv::dotenv;
 
@@ -8,8 +7,6 @@ fn main() {
     env_logger::init();
 
     debug!("app init");
-    let q = Quiz::new("irregular_verbs");
-    q.run_quiz();
 
     // Configure and run the application
     iced::application("App", AppState::update, AppState::view)
