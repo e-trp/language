@@ -56,8 +56,6 @@ impl Default for  AppState {
 }
 
 
-
-
 #[derive(Debug, Clone)]
 pub enum Message {
     Debug(String),
