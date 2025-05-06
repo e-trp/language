@@ -1,17 +1,19 @@
 use std::str::FromStr;
 
+use diesel::expression::is_aggregate::No;
 use iced::{
-    widget::{button, column, row, text, text_input, Column},
-    Size, Theme, Length, alignment, Element
+    alignment, widget::{button, column, row, text, text_input, Column}, Color, Element, Length, Size, Theme
 };
+
 use log::debug;
-use crate::word::{VerbForms, Word};
+use crate::word::{self, VerbForms, Word};
+use crate::quiz::IrregVerbQuiz;
 
 use iced_aw::menu::{Item, Menu};
 use iced_aw::{menu_bar, menu_items};
 
 pub const DEFAULT_THEME: Theme = Theme::Dark;
-pub const DEFAULT_WINDOW_SIZE: Size = Size::new(400.0, 400.0);
+pub const DEFAULT_WINDOW_SIZE: Size = Size::new(600.0, 400.0);
 
 
 fn base_button<'a>(
@@ -61,7 +63,10 @@ pub struct AppState {
     pub search_string: String,
     pub past_simple_text_input: String,
     pub past_participle_text_input: String,
-    pub words: Option<Vec<VerbForms>>
+    pub current_word: Option<VerbForms>,
+    pub words: Option<IrregVerbQuiz>,
+    pub success: u32,
+    pub errors: u32
 }
 
 
@@ -73,8 +78,10 @@ impl Default for  AppState {
             search_string: "".to_string(), 
             past_participle_text_input: "".to_string(), 
             past_simple_text_input: "".to_string(), 
-            words: None
-
+            current_word: None,
+            words: None,
+            success: 0,
+            errors: 0
         } 
     }
 }
@@ -139,15 +146,25 @@ impl AppState {
             },
             MenuItem::TextQuiz(_) => {window},
             MenuItem::IrrQuiz(_) => {
-                let irregular_quiz_view = window.extend([
-                    text("Укажите v2-v3 формы неправильного глагола: ").into(),
-                    row![
-                        text_input("past simple", &self.past_simple_text_input).on_input(Message::PastSimple),
-                        text_input("past participle", &self.past_participle_text_input).on_input(Message::PastParticiple),
-                    ].spacing(10).into(),
-                    labeled_button("Проверить", Message::CheckIrregularVerb).into()
-                ]);
-                irregular_quiz_view
+                match &self.current_word {
+                    Some(word) => {
+                        let title = format!("Укажите v2-v3 формы неправильного глагола: {}", &word.base_form);
+                        let irregular_quiz_view = window.extend([
+                            text(title).into(),
+                            row![
+                                text_input("past simple", &self.past_simple_text_input).on_input(Message::PastSimple),
+                                text_input("past participle", &self.past_participle_text_input).on_input(Message::PastParticiple),
+                            ].spacing(10).into(),
+                            labeled_button("Проверить", Message::CheckIrregularVerb).into(),
+                            row![
+                                text(&self.success).size(20).color(Color{r:0., g:1.0, b:0., a:1.0}),
+                                text(&self.errors).size(20).color(Color{r:1.0, g: 0., b:0., a:1.0}),
+                            ].spacing(40).into()
+                        ]);
+                        irregular_quiz_view
+                    }, 
+                    None => {window}
+                }
             
             },
             MenuItem::Dictionary(_) => {
@@ -207,7 +224,8 @@ impl AppState {
                         self.menu = MenuItem::Dictionary(None);
                     }, 
                     MenuItem::IrrQuiz(_) => {
-                        self.words = Some(Word::fetch_irregular_verbs().unwrap());
+                        self.words = Some(IrregVerbQuiz::new());
+                        self.current_word = self.words.as_mut().unwrap().next_word();
                         self.menu = MenuItem::IrrQuiz(None);
                     }
                     _ => {}
@@ -215,7 +233,16 @@ impl AppState {
 
             },
             Message::CheckIrregularVerb => {
-                debug!("verb check");
+                let word = self.current_word.as_ref().unwrap();
+                if (self.past_simple_text_input == word.past_simple &&
+                    self.past_participle_text_input == word.past_participle) {
+                    self.success += 1;
+                } else {
+                    self.errors += 1;
+                }
+                self.current_word = self.words.as_mut().unwrap().next_word();
+                self.past_participle_text_input = "".to_string();
+                self.past_simple_text_input = "".to_string();
             },
 
             Message::Debug(var) => { debug!("{}", var);},
