@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use diesel::expression::is_aggregate::No;
 use iced::{
-    alignment, widget::{button, column, row, text, text_input, Column}, Color, Element, Length, Size, Theme
+    alignment, overlay::menu::State, widget::{button, column, row, text, text_input, Column}, Color, Element, Length, Size, Theme
 };
 
 use log::debug;
@@ -46,11 +46,16 @@ pub struct Result {
     error_count: u32,
 }
 
+#[derive(Debug, Clone)]
+pub enum QuizState {
+    Start, 
+    End
+}
 
 #[derive(Debug, Clone)]
 pub enum MenuItem  {
     Finder(Option<String>),
-    IrrQuiz(Option<Result>),
+    IrrQuiz(QuizState),
     TextQuiz(Option<Result>),
     Dictionary(Option<String>)
 }
@@ -96,7 +101,8 @@ pub enum Message {
     MenuButton(MenuItem),
     PastSimple(String),
     PastParticiple(String),
-    CheckIrregularVerb
+    CheckIrregularVerb,
+    EndQuiz
 }
 
 
@@ -108,7 +114,7 @@ impl AppState {
         let menu_quiz = menu_bar!(
             (debug_button_s("Тренировки"), menu_tpl_1(menu_items!(
                 (labeled_button("Текст", Message::MenuButton(MenuItem::TextQuiz(None))))
-                (labeled_button("Неправильные глаголы", Message::MenuButton(MenuItem::IrrQuiz(None))))
+                (labeled_button("Неправильные глаголы", Message::MenuButton(MenuItem::IrrQuiz(QuizState::Start))))
             )).width(240.0))
         );
 
@@ -145,27 +151,45 @@ impl AppState {
                 find_view
             },
             MenuItem::TextQuiz(_) => {window},
-            MenuItem::IrrQuiz(_) => {
-                match &self.current_word {
-                    Some(word) => {
-                        let title = format!("Укажите v2-v3 формы неправильного глагола: {}", &word.base_form);
-                        let irregular_quiz_view = window.extend([
-                            text(title).into(),
-                            row![
-                                text_input("past simple", &self.past_simple_text_input).on_input(Message::PastSimple),
-                                text_input("past participle", &self.past_participle_text_input).on_input(Message::PastParticiple),
-                            ].spacing(10).into(),
-                            labeled_button("Проверить", Message::CheckIrregularVerb).into(),
-                            row![
-                                text(&self.success).size(20).color(Color{r:0., g:1.0, b:0., a:1.0}),
-                                text(&self.errors).size(20).color(Color{r:1.0, g: 0., b:0., a:1.0}),
-                            ].spacing(40).into()
-                        ]);
-                        irregular_quiz_view
-                    }, 
-                    None => {window}
-                }
+            MenuItem::IrrQuiz(state) => {
+                match state {
+                    QuizState::Start => {
+                        match &self.current_word {
+                            Some(word) => {
+                                let title = format!("Укажите v2-v3 формы неправильного глагола: {}", &word.base_form);
+                                let irregular_quiz_view = window.extend([
+                                    column![
+                                        text(title),
+                                        row![
+                                            text_input("past simple", &self.past_simple_text_input).on_input(Message::PastSimple),
+                                            text_input("past participle", &self.past_participle_text_input).on_input(Message::PastParticiple),
+                                        ].spacing(10),
+                                        row![
+                                            labeled_button("Завершить тест", Message::EndQuiz),
+                                            labeled_button("Далее", Message::CheckIrregularVerb),
             
+                                        ].spacing(10),
+                                    ].spacing(10).into()
+                                ]);
+                                irregular_quiz_view
+                            }, 
+                            None => {window}
+                        }
+                    }
+                    QuizState::End => {
+                        let result_view = window.push(
+                            column![
+                            row![
+                                text(format!("Правильно: {}", &self.success)).size(15).color(Color{r:0., g:1.0, b:0., a:1.0}),
+                                text(format!("Не правильно: {}", &self.errors)).size(15).color(Color{r:1.0, g: 0., b:0., a:1.0}),
+
+                            ].spacing(10),
+                            text(self.words.as_ref().unwrap().generate_errors_data())
+                        ]
+                    );
+                        result_view
+                    }
+                }
             },
             MenuItem::Dictionary(_) => {
                 let dictionary_view = window.extend(
@@ -226,7 +250,7 @@ impl AppState {
                     MenuItem::IrrQuiz(_) => {
                         self.words = Some(IrregVerbQuiz::new());
                         self.current_word = self.words.as_mut().unwrap().next_word();
-                        self.menu = MenuItem::IrrQuiz(None);
+                        self.menu = MenuItem::IrrQuiz(QuizState::Start);
                     }
                     _ => {}
                 }
@@ -239,6 +263,7 @@ impl AppState {
                     self.success += 1;
                 } else {
                     self.errors += 1;
+                    self.words.as_mut().unwrap().add_wrong_word(word.clone());
                 }
                 self.current_word = self.words.as_mut().unwrap().next_word();
                 self.past_participle_text_input = "".to_string();
@@ -246,6 +271,12 @@ impl AppState {
             },
 
             Message::Debug(var) => { debug!("{}", var);},
+
+            Message::EndQuiz => {
+                let record = self.words.as_mut().unwrap().write_record().unwrap_or(0 as usize);
+                self.menu = MenuItem::IrrQuiz(QuizState::End);
+                debug!("write quiz history to db result {}", record);
+            }
 
         }
     }
