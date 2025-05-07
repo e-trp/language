@@ -4,7 +4,7 @@ use dotenv::dotenv;
 
 fn main() {
     dotenv().ok();
-    env_logger::init();
+    env_logger::Builder::new().filter_level(log::LevelFilter::Info).init();
 
     debug!("app init");
 

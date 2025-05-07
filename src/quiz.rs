@@ -1,5 +1,5 @@
-use diesel::{dsl::insert_into, prelude::*, result::Error};
-use crate::{schema::{self, quiz_history::{self, errors}}, word::{self, establish_connection, VerbForms, Word}};
+use diesel::{ dsl::insert_into, prelude::*, result::Error};
+use crate::{schema::{self, quiz_history::{self, errors}}, word::{self, establish_connection, log_query, VerbForms, Word}};
 use rand::prelude::*;
 use chrono::Local;
 
@@ -24,7 +24,7 @@ pub struct QuizHistory {
     pub quiz_id: i32,
     pub result: bool,
     pub errors: i32,
-    pub quiz_errors_data: Option<String>,
+    pub context: String,
     pub quiz_date: Option<f64>
 }
 
@@ -66,13 +66,17 @@ impl IrregVerbQuiz {
 
     pub fn write_record(&self)  -> Result<usize, Error>  {
         let mut conn = establish_connection();
-        insert_into(schema::quiz_history::table).values(QuizHistory{
+        let history = QuizHistory{
             id: None, quiz_id: self.quiz.id.unwrap(),
             result: self.wrong_words.len() == 0, 
             errors: self.wrong_words.len() as i32,
             quiz_date: Some(Local::now().timestamp() as f64),
-            quiz_errors_data: Some(self.generate_errors_data())
-        }).execute(&mut conn)
+            context: self.generate_errors_data()
+        };
+        let query = insert_into(schema::quiz_history::table).values(&history);
+        log_query(&query);
+        query.execute(&mut conn)
+
     }
 
     pub fn generate_errors_data(&self) -> String{

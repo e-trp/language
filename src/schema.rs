@@ -15,7 +15,6 @@ diesel::table! {
         errors -> Integer,
         context -> Text,
         quiz_date -> Nullable<Double>,
-        quiz_errors_data -> Nullable<Text>,
     }
 }
 
