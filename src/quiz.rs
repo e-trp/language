@@ -1,5 +1,5 @@
 use diesel::{ dsl::insert_into, prelude::*, result::Error};
-use crate::{schema::{self, quiz_history::{self, errors}}, word::{self, establish_connection, log_query, VerbForms, Word}};
+use crate::{schema::{self}, word::{establish_connection, log_query, VerbForms, Word}};
 use rand::prelude::*;
 use chrono::Local;
 

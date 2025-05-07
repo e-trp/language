@@ -1,12 +1,11 @@
 use std::str::FromStr;
 
-use diesel::expression::is_aggregate::No;
 use iced::{
-    alignment, overlay::menu::State, widget::{button, column, row, text, text_input, Column}, Color, Element, Length, Size, Theme
+    alignment, widget::{button, column, row, text, text_input, Column}, Color, Element, Length, Size, Theme
 };
 
 use log::debug;
-use crate::word::{self, VerbForms, Word};
+use crate::word::{VerbForms, Word};
 use crate::quiz::IrregVerbQuiz;
 
 use iced_aw::menu::{Item, Menu};
@@ -258,8 +257,8 @@ impl AppState {
             },
             Message::CheckIrregularVerb => {
                 let word = self.current_word.as_ref().unwrap();
-                if (self.past_simple_text_input == word.past_simple &&
-                    self.past_participle_text_input == word.past_participle) {
+                if self.past_simple_text_input == word.past_simple &&
+                    self.past_participle_text_input == word.past_participle {
                     self.success += 1;
                 } else {
                     self.errors += 1;
