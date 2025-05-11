@@ -5,6 +5,7 @@ use chrono::Local;
 
 
 const IRREGULAR_VERB_QUIZ: i32 = 1;
+#[allow(dead_code)]
 const FULL_TEXT_QUIZ: i32 = 2;
 
 #[derive(Debug, Queryable, Selectable, Insertable, Clone)]
@@ -44,6 +45,12 @@ pub struct IrregVerbQuiz {
 }
 
 
+impl Default for IrregVerbQuiz {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IrregVerbQuiz {
 
     pub fn new() -> Self {
@@ -68,7 +75,7 @@ impl IrregVerbQuiz {
         let mut conn = establish_connection();
         let history = QuizHistory{
             id: None, quiz_id: self.quiz.id.unwrap(),
-            result: self.wrong_words.len() == 0, 
+            result: self.wrong_words.is_empty(), 
             errors: self.wrong_words.len() as i32,
             quiz_date: Some(Local::now().timestamp() as f64),
             context: self.generate_errors_data()

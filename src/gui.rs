@@ -272,7 +272,7 @@ impl AppState {
             Message::Debug(var) => { debug!("{}", var);},
 
             Message::EndQuiz => {
-                let record = self.words.as_mut().unwrap().write_record().unwrap_or(0 as usize);
+                let record = self.words.as_mut().unwrap().write_record().unwrap_or(0_usize);
                 self.menu = MenuItem::IrrQuiz(QuizState::End);
                 debug!("write quiz history to db result {}", record);
             }

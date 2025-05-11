@@ -22,11 +22,11 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn log_query<T>(query: &T) -> () 
+pub fn log_query<T>(query: &T) 
 where
     T: diesel::query_builder::QueryFragment<diesel::sqlite::Sqlite>,
 {
-    println!("{}",debug_query::<diesel::sqlite::Sqlite, _>(query).to_string());
+    println!("{}",debug_query::<diesel::sqlite::Sqlite, _>(query));
 }
 
 #[derive(Debug, Queryable, Selectable, Insertable)]
